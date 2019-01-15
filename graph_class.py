@@ -3,6 +3,12 @@ from random import randint
 from random import sample
 import numpy as np
 
+possibile_credits = [40, 50, 60, 70]
+probs = np.random.geometric(p=0.10, size=len(possibile_credits))
+probs = probs / np.sum(probs)
+def get_res_credits():
+    return list(np.random.choice(possibile_credits, size=1, replace=False, p=probs))[0]
+
 class Graph:
     def __init__(self):
         self.residents = []
@@ -10,16 +16,10 @@ class Graph:
         self.edges = []
         self.master = []
 
-    def get_res_credits(self):
-        possibile_credits = [40, 50, 60, 70]
-        probs = np.random.geometric(p=0.10, size=len(possibile_credits))
-        probs = probs / np.sum(probs)
-        return list(np.random.choice(possibile_credits, size=1, replace=False, p=probs))[0]
-
     def init_resident_capacities(self):
         res = self.residents
         for r in res:
-            r.uq = self.get_res_credits()
+            r.uq = get_res_credits()
 
     def init_resident_class(self, res):
         n = len(res.pref)

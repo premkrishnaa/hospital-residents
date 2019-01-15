@@ -7,52 +7,6 @@ import numpy as np
 
 random.seed(1000)
 
-def random_model_generator(n1, n2, k, cap):
-    """
-    create a graph with the partition A of size n1
-    and partition B of size n2 using the random model
-    :param n1: size of partition A
-    :param n2: size of partition B
-    :param k: length of preference list for vertices in A
-    :param cap: capacity of a vertex in partition B
-    :return: bipartite graph with above properties
-    """
-    def order_by_master_list(l, master_list):
-        return sorted(l, key=master_list.index)
-
-    # create the sets R and H, r_1 ... r_n1, h_1 .. h_n2
-    R = set('r{}'.format(i) for i in range(1, n1+1))
-    H = set('h{}'.format(i) for i in range(1, n2+1))
-
-    # prepare a master list
-    # master_list = list(h for h in H)
-    # random.shuffle(master_list)
-
-    # setup the capacities for the vertices
-    capacities = dict((r, (0, 1)) for r in R)
-    #capacities.update(dict((h, 1) for h in H))
-    capacities.update(dict((h, (0, cap)) for h in H))
-
-    pref_lists_H, pref_lists_R = collections.defaultdict(list), {}
-    for resident in R:
-        pref_list = random.sample(H, min(len(H), k))  # random.randint(1, len(H)))  # sample houses
-        pref_lists_R[resident] = pref_list  # order_by_master_list(pref_list, master_list)
-        # add these residents to the preference list for the corresponding hospital
-        for hospital in pref_list:
-            pref_lists_H[hospital].append(resident)
-
-    for hospital in H:
-        random.shuffle(pref_lists_H[hospital])
-
-    # create a dict with the preference lists for residents and hospitals
-    E = pref_lists_R
-    E.update(pref_lists_H)
-
-    # only keep those hospitals which are in some residents preference list
-    H_ = set(hospital for hospital in H if hospital in E)
-    return graph.BipartiteGraph(R, H_, E, capacities)
-
-
 def mahadian_model_generator(n1, n2, k_low, k_up):
     """
     create a graph with the partition R of size n1 and
@@ -62,17 +16,15 @@ def mahadian_model_generator(n1, n2, k_low, k_up):
     Sixteenth Annual ACM-SIAM Symposium on Discrete Algorithms
     :param n1: size of partition R
     :param n2: size of partition H
-    :param k: length of preference list for the residents
-    :param cap: capacity of the hospitals
-    :return: bipartite graph with above properties
     """
     def order_by_master_list(l, master_list):
         return sorted(l, key=master_list.index)
 
+    possibile_credits = [5, 10, 15, 20]
+    probs = np.random.geometric(p=0.10, size=len(possibile_credits))
+    probs = probs / np.sum(probs)
+
     def get_hosp_credits():
-        possibile_credits = [5, 10, 15, 20]
-        probs = np.random.geometric(p=0.10, size=len(possibile_credits))
-        probs = probs / np.sum(probs)
         return list(np.random.choice(possibile_credits, size=1, replace=False, p=probs))[0]
 
     def get_hosp_capacity_uniform():
