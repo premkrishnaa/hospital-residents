@@ -7,7 +7,7 @@ import numpy as np
 
 random.seed(1000)
 
-def mahadian_model_generator(n1, n2, k_low, k_up):
+def seat_model_generator(n1, n2, k_low, k_up):
     """
     create a graph with the partition R of size n1 and
     partition H of size n2 using the model as described in
@@ -35,7 +35,12 @@ def mahadian_model_generator(n1, n2, k_low, k_up):
         for h in g.hospitals:
             hosp_cred_sum += h.credits
 
-        return int(np.ceil((1.5 * res_cap_sum) / hosp_cred_sum))
+        return int(np.ceil((2.5 * res_cap_sum) / hosp_cred_sum))
+
+    def get_hosp_capacity_non_uniform(cap):
+        low = int(np.ceil(0.3*cap))
+        high = int(np.ceil(1.7*cap))
+        return random.randint(low, high)
 
     g = Graph()
 
@@ -76,13 +81,15 @@ def mahadian_model_generator(n1, n2, k_low, k_up):
             pref_H[h].append(r)
 
     for r in R:
-        pref_R[r] = order_by_master_list(pref_R[r], master_list_h)
+        # pref_R[r] = order_by_master_list(pref_R[r], master_list_h)
+        random.shuffle(pref_R[r])
         res = g.get_resident(r)
         for hosp in pref_R[r]:
             res.pref.append(g.get_hospital(hosp))
 
     for h in H:
-        pref_H[h] = order_by_master_list(pref_H[h], master_list)
+        # pref_H[h] = order_by_master_list(pref_H[h], master_list)
+        random.shuffle(pref_H[h])
         hosp = g.get_hospital(h)
         for res in pref_H[h]:
             hosp.pref.append(g.get_resident(res))
@@ -92,7 +99,7 @@ def mahadian_model_generator(n1, n2, k_low, k_up):
     # uniform capacity for courses
     cap = get_hosp_capacity_uniform()
     for h in g.hospitals:
-        h.uq = cap
+        h.uq = get_hosp_capacity_non_uniform(cap)
 
     g.init_all_resident_class()
     g.init_master_classes_random()
@@ -105,7 +112,7 @@ def main():
         print("usage: {} <n1> <n2> <k_low> <k_up>".format(sys.argv[0]), file=sys.stderr)
     else:
         n1, n2, k_low, k_up = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
-        G = mahadian_model_generator(n1, n2, k_low, k_up)
+        G = seat_model_generator(n1, n2, k_low, k_up)
         G.print_format()
 
 if __name__ == '__main__':
