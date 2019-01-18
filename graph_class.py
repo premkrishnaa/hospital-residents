@@ -328,7 +328,6 @@ class Graph:
                     return False
         return True
 
-
     def verify_blocking_pairs(self, dir_path):
         for r in self.residents:
             r.compute_worst_rank_hosp()
@@ -338,33 +337,40 @@ class Graph:
         bps_listed = set()
         bps_calc = set()
         for r in self.residents:
-            wh = r.worstRankHosp
+            # wh = r.worstRankHosp
             for h in r.pref:
+                wr = h.worstRankRes
                 if(not r.is_matched_to(h)):
-                    wr = h.worstRankRes
-                    if( ((wh == None and r.uq >= h.credits) or r.is_better_preferred(h.name, wh.name))
-                        and ((wr == None and h.uq > 0) or h.is_better_preferred(r.name, wr.name)) ):
-                        if(self.check_feasible(r,h,wh)):
-                            s = r.name + ',' + h.name + ',' + wr.name
-                            if(s in bps_calc):
-                                print(s)
-                            bps_calc.add(s)
+                    if(len(r.matched) == 0):
+                        r.matched.append(None)
+                    for wh in r.matched:
+                        flag = 0
+                        if( ((wh == None and r.uq >= h.credits) or r.is_better_preferred(h.name, wh.name))
+                            and ((wr == None and h.uq > 0) or h.is_better_preferred(r.name, wr.name)) ):
+                            if(self.check_feasible(r,h,wh)):
+                                s = r.name + ',' + h.name + ',' + wr.name
+                                bps_calc.add(s)
+                                flag = 1
+                        if(flag == 1):
+                            break
 
         print('\n\n****************\n\n')
-        f = open(dir_path + '/iterativeHR/unstablePairs.csv')
+        f = open(dir_path + '/iterativeHR/unstablePairs_re.csv')
         line_ct = 0
         for line in f.readlines():
             line = line.strip()
             if(line_ct != 0):
-                if(line in bps_listed):
-                    print(line)
                 bps_listed.add(line)
             line_ct += 1
         f.close()
 
         print(len(bps_calc), len(bps_listed), len(bps_listed & bps_calc))
         print('\n\n****************\n\n')
-        print(bps_calc & (bps_calc ^ bps_listed))
+        final = (bps_listed & (bps_calc ^ bps_listed))
+        print(str(len(final)) + '\n\n')
+        for x in final:
+            print(x)
+        print('\n\n****************\n\n')
 
     def verify_feasible_matching(self):
         for r in self.residents:
@@ -376,3 +382,20 @@ class Graph:
                 return False
 
         return True
+
+    def verify_exchange_blocking_pairs(self):
+        n = len(self.residents)
+        for i in range(n):
+            for j in range(i+1, n):
+                r1 = self.residents[i]
+                r2 = self.residents[j]
+                for h1 in r1.matched:
+                    flag = 0
+                    for h2 in r2.matched:
+                        if(r1.is_better_preferred(h2.name, h1.name) and self.check_feasible(r1, h2, h1)
+                            and r2.is_better_preferred(h1.name, h2.name) and self.check_feasible(r2, h1, h2)):
+                            print(r1.name + ',' + h1.name + ',' + r2.name + ',' + h2.name)
+                            flag = 1
+                            break
+                    if(flag == 1):
+                        break

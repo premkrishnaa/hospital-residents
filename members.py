@@ -19,6 +19,7 @@ class Resident:
         for i, h in enumerate(self.pref):
             if(h.name == hosp_name):
                 return i+1
+        return 9999999999
 
     def is_better_preferred(self, h1, h2):
         return self.get_rank(h1) < self.get_rank(h2)
