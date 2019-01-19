@@ -1,6 +1,5 @@
 from graph_class import Graph
 from members import *
-import graph
 import collections
 import random
 import numpy as np
@@ -102,7 +101,10 @@ def seat_model_generator(n1, n2, k_low, k_up):
         h.uq = get_hosp_capacity_non_uniform(cap)
 
     g.init_all_resident_class()
-    g.init_master_classes_random()
+    if(n2 > 20):
+        g.init_master_classes_disjoint()
+    else:
+        g.init_master_classes_random()
     return g
 
 

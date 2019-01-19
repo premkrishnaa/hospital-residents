@@ -2,11 +2,12 @@ class Resident:
     def __init__(self, name, uq=0):
         self.name = name
         self.pref = []
-        self.matched = None
+        self.matched = []
         self.prefPtr = 0
         self.lq = 0
         self.uq = uq
         self.classes = []
+        self.worstRankHosp = None
 
     def get_index(self):
         return self.name[1:]
@@ -18,6 +19,44 @@ class Resident:
         for i, h in enumerate(self.pref):
             if(h.name == hosp_name):
                 return i+1
+        return 9999999999
+
+    def is_better_preferred(self, h1, h2):
+        return self.get_rank(h1) < self.get_rank(h2)
+
+    def get_total_allotted_credits(self):
+        tot = 0
+        for h in self.matched:
+            tot += h.credits
+        return tot
+
+    def compute_worst_rank_hosp(self):
+        worstRank = -1
+        worstRankHospital = None
+        for h in self.matched:
+            curRank = self.get_rank(h.name)
+            if(curRank > worstRank):
+                worstRank = curRank
+                worstRankHospital = h
+        self.worstRankHosp = worstRankHospital
+
+    def is_matched_to(self, hosp):
+        for h in self.matched:
+            if(h.name == hosp.name):
+                return True
+        return False
+
+    def is_feasible_matching(self, master):
+        tot_cred = self.get_total_allotted_credits()
+        if(tot_cred > self.uq):
+            return False
+        for c in self.classes:
+            if(c.intersection_with_matching(self.matched) > c.cap):
+                return False
+        for c in master:
+            if(c.intersection_with_matching(self.matched) > c.cap):
+                return False
+        return True
 
 class Hospital:
     def __init__(self, name, lq, uq, credits=10):
@@ -28,6 +67,9 @@ class Hospital:
         self.matched = []
         self.worstRankRes = None
         self.credits = credits
+
+    def is_feasible_matching(self):
+        return len(self.matched) <= self.uq
 
     def get_index(self):
         return self.name[1:]
@@ -40,11 +82,14 @@ class Hospital:
             if(r.name == res_name):
                 return i+1
 
+    def is_better_preferred(self, r1, r2):
+        return self.get_rank(r1) < self.get_rank(r2)
+
     def compute_worst_rank_res(self):
         worstRank = -1
         worstRankResident = None
         for r in self.matched:
-            curRank = self.getRank(r.name)
+            curRank = self.get_rank(r.name)
             if(curRank > worstRank):
                 worstRank = curRank
                 worstRankResident = r
@@ -66,6 +111,13 @@ class Classification:
         for hosp in self.class_list:
             s += ',' + hosp
         return s
+
+    def intersection_with_matching(self, m):
+        m_names = set()
+        for m_ in m:
+            m_names.add(m_.name)
+        m_names = m_names & set(self.class_list)
+        return len(m_names)
 
     def print_class(self):
         print('{(', end='', flush=True)

@@ -1,6 +1,7 @@
 from members import *
 from random import randint
 from random import sample
+from random import shuffle
 import numpy as np
 import os
 
@@ -56,9 +57,30 @@ class Graph:
                 c = Classification()
                 used_classes.append(set(cur_class))
                 c.class_list = cur_class
-                c.cap = randint(1, cur_class_size-1)
-                self.master.append(c)
+                # c.cap = randint(1, cur_class_size-1)
+                c.cap = min(randint(1, 3), len(cur_class)-1)
+                if(c.cap > 0):
+                    self.master.append(c)
                 ct += 1;
+
+    def init_master_classes_disjoint(self):
+        rpref = []
+        for h in self.hospitals:
+            rpref.append(h.name)
+        n = len(rpref)
+        shuffle(rpref)
+        tot_classes = 20
+        class_size = int(np.ceil(float(n)/tot_classes))
+        ct = 0
+        while(ct < tot_classes):
+            cur_class = rpref[ct*class_size : (ct+1)*class_size]
+            if(len(cur_class) > 0):
+                c = Classification()
+                c.class_list = cur_class
+                c.cap = min(randint(1, 3), len(cur_class)-1)
+                if(c.cap > 0):
+                    self.master.append(c)
+            ct += 1;
 
     def init_all_resident_class(self):
         for res in self.residents:
@@ -199,3 +221,199 @@ class Graph:
             if(h.name == name):
                 return h
         return None
+
+    def create_graph(self, dir_path):
+        f = open(dir_path + '/studentList.csv')
+        line_ct = 0
+        for line in f.readlines():
+            if(line_ct != 0):
+                line_split = line.split(',')
+                self.residents.append(Resident(line_split[0], int(line_split[1])))
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/courseList.csv')
+        line_ct = 0
+        for line in f.readlines():
+            if(line_ct != 0):
+                line_split = line.split(',')
+                self.hospitals.append(Hospital(line_split[0], 0, int(line_split[1]), int(line_split[2])))
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/studentPreferenceList.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.replace(' ', '')
+            line = line.strip()
+            if(line_ct != 0):
+                line_split = line.split(',')
+                r_name = line_split[0]
+                r = self.get_resident(r_name)
+                for h_name in line_split[1:]:
+                    hosp = self.get_hospital(h_name)
+                    r.pref.append(hosp)
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/coursePreferenceList.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.replace(' ', '')
+            line = line.strip()
+            if(line_ct != 0):
+                line_split = line.split(',')
+                h_name = line_split[0]
+                h = self.get_hospital(h_name)
+                for r_name in line_split[1:]:
+                    res = self.get_resident(r_name)
+                    h.pref.append(res)
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/studentClassSpecification.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.strip()
+            if(line_ct != 0):
+                line_split = line.split(',')
+                r_name = line_split[0]
+                r = self.get_resident(r_name)
+                c = Classification()
+                c.cap = int(line_split[1])
+                for h_name in line_split[2:]:
+                    c.class_list.append(h_name)
+                r.classes.append(c)
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/masterClassSpecification.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.strip()
+            if(line_ct != 0):
+                line_split = line.split(',')
+                c = Classification()
+                c.cap = int(line_split[0])
+                for h_name in line_split[1:]:
+                    c.class_list.append(h_name)
+                self.master.append(c)
+            line_ct += 1
+        f.close()
+
+        f = open(dir_path + '/iterativeHR/perStudentAllottedCourses.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.strip()
+            if(line_ct != 0):
+                line_split = line.split(',')
+                r_name = line_split[0]
+                r = self.get_resident(r_name)
+                for h_name in line_split[1:]:
+                    hosp = self.get_hospital(h_name)
+                    r.matched.append(hosp)
+                    hosp.matched.append(r)
+            line_ct += 1
+        f.close()
+
+    def check_feasible(self, r, h, wh):
+        wh_creds = 0
+        if(wh != None):
+            wh_creds = wh.credits
+        if((r.get_total_allotted_credits() - wh_creds + h.credits) > r.uq):
+            return False
+        for c in r.classes:
+            if(h.name in c.class_list):
+                if((wh == None or wh.name not in c.class_list) and c.cap == c.intersection_with_matching(r.matched)):
+                    return False
+        for c in self.master:
+            if(h.name in c.class_list):
+                if((wh == None or wh.name not in c.class_list) and c.cap == c.intersection_with_matching(r.matched)):
+                    return False
+        return True
+
+    def verify_blocking_pairs(self, dir_path):
+        for h in self.hospitals:
+            h.compute_worst_rank_res()
+
+        bps_listed = set()
+        bps_calc = set()
+        counts = [0,0,0,0]
+        for r in self.residents:
+            for h in r.pref:
+                if(not r.is_matched_to(h)):
+                    wr = h.worstRankRes
+                    if(self.check_feasible(r, h, None)):
+                        if(len(h.matched) < h.uq):
+                            s = r.name + ',' + h.name
+                            bps_calc.add(s)
+                            counts[0] += 1
+                            continue
+                        elif(wr != None and h.is_better_preferred(r.name, wr.name)):
+                            s = r.name + ',' + h.name + ',' + wr.name
+                            bps_calc.add(s)
+                            counts[1] += 1
+                            continue
+
+                    for wh in r.matched:
+                        flag = 0
+                        if(r.is_better_preferred(h.name, wh.name) and self.check_feasible(r, h, wh)):
+                            if(len(h.matched) < h.uq):
+                                s = r.name + ',' + h.name
+                                bps_calc.add(s)
+                                flag = 1
+                                counts[2] += 1
+                            elif(wr != None and h.is_better_preferred(r.name, wr.name)):
+                                s = r.name + ',' + h.name + ',' + wr.name
+                                bps_calc.add(s)
+                                flag = 1
+                                counts[3] += 1
+                        if(flag == 1):
+                            break
+
+        print('\n\n****************\n\n')
+        f = open(dir_path + '/iterativeHR/unstablePairs_re.csv')
+        line_ct = 0
+        for line in f.readlines():
+            line = line.strip()
+            if(line_ct != 0):
+                bps_listed.add(line)
+            line_ct += 1
+        f.close()
+
+        print(len(bps_calc), len(bps_listed), len(bps_listed & bps_calc))
+        print(counts)
+        print('\n\n****************\n\n')
+        final = (bps_listed & (bps_calc ^ bps_listed))
+        print(str(len(final)) + '\n\n')
+        for x in final:
+            print(x)
+        print('\n\n****************\n\n')
+
+    def verify_feasible_matching(self):
+        for r in self.residents:
+            if(not r.is_feasible_matching(self.master)):
+                return False
+
+        for h in self.hospitals:
+            if(not h.is_feasible_matching()):
+                return False
+
+        return True
+
+    def verify_exchange_blocking_pairs(self):
+        n = len(self.residents)
+        for i in range(n):
+            for j in range(i+1, n):
+                r1 = self.residents[i]
+                r2 = self.residents[j]
+                for h1 in r1.matched:
+                    flag = 0
+                    for h2 in r2.matched:
+                        if((not r1.is_matched_to(h2)) and r1.is_better_preferred(h2.name, h1.name) and self.check_feasible(r1, h2, h1)
+                            and (not r2.is_matched_to(h1)) and r2.is_better_preferred(h1.name, h2.name) and self.check_feasible(r2, h1, h2)):
+                            print(r1.name + ',' + h1.name + ',' + r2.name + ',' + h2.name)
+                            flag = 1
+                            break
+                    if(flag == 1):
+                        break
