@@ -320,37 +320,50 @@ class Graph:
             return False
         for c in r.classes:
             if(h.name in c.class_list):
-                if(wh.name not in c.class_list and c.cap == c.intersection_with_matching(r.matched)):
+                if((wh == None or wh.name not in c.class_list) and c.cap == c.intersection_with_matching(r.matched)):
                     return False
         for c in self.master:
             if(h.name in c.class_list):
-                if(wh.name not in c.class_list and c.cap == c.intersection_with_matching(r.matched)):
+                if((wh == None or wh.name not in c.class_list) and c.cap == c.intersection_with_matching(r.matched)):
                     return False
         return True
 
     def verify_blocking_pairs(self, dir_path):
-        for r in self.residents:
-            r.compute_worst_rank_hosp()
         for h in self.hospitals:
             h.compute_worst_rank_res()
 
         bps_listed = set()
         bps_calc = set()
+        counts = [0,0,0,0]
         for r in self.residents:
-            # wh = r.worstRankHosp
             for h in r.pref:
-                wr = h.worstRankRes
                 if(not r.is_matched_to(h)):
-                    if(len(r.matched) == 0):
-                        r.matched.append(None)
+                    wr = h.worstRankRes
+                    if(self.check_feasible(r, h, None)):
+                        if(len(h.matched) < h.uq):
+                            s = r.name + ',' + h.name
+                            bps_calc.add(s)
+                            counts[0] += 1
+                            continue
+                        elif(wr != None and h.is_better_preferred(r.name, wr.name)):
+                            s = r.name + ',' + h.name + ',' + wr.name
+                            bps_calc.add(s)
+                            counts[1] += 1
+                            continue
+
                     for wh in r.matched:
                         flag = 0
-                        if( ((wh == None and r.uq >= h.credits) or r.is_better_preferred(h.name, wh.name))
-                            and ((wr == None and h.uq > 0) or h.is_better_preferred(r.name, wr.name)) ):
-                            if(self.check_feasible(r,h,wh)):
+                        if(r.is_better_preferred(h.name, wh.name) and self.check_feasible(r, h, wh)):
+                            if(len(h.matched) < h.uq):
+                                s = r.name + ',' + h.name
+                                bps_calc.add(s)
+                                flag = 1
+                                counts[2] += 1
+                            elif(wr != None and h.is_better_preferred(r.name, wr.name)):
                                 s = r.name + ',' + h.name + ',' + wr.name
                                 bps_calc.add(s)
                                 flag = 1
+                                counts[3] += 1
                         if(flag == 1):
                             break
 
@@ -365,6 +378,7 @@ class Graph:
         f.close()
 
         print(len(bps_calc), len(bps_listed), len(bps_listed & bps_calc))
+        print(counts)
         print('\n\n****************\n\n')
         final = (bps_listed & (bps_calc ^ bps_listed))
         print(str(len(final)) + '\n\n')
@@ -392,8 +406,8 @@ class Graph:
                 for h1 in r1.matched:
                     flag = 0
                     for h2 in r2.matched:
-                        if(r1.is_better_preferred(h2.name, h1.name) and self.check_feasible(r1, h2, h1)
-                            and r2.is_better_preferred(h1.name, h2.name) and self.check_feasible(r2, h1, h2)):
+                        if((not r1.is_matched_to(h2)) and r1.is_better_preferred(h2.name, h1.name) and self.check_feasible(r1, h2, h1)
+                            and (not r2.is_matched_to(h1)) and r2.is_better_preferred(h1.name, h2.name) and self.check_feasible(r2, h1, h2)):
                             print(r1.name + ',' + h1.name + ',' + r2.name + ',' + h2.name)
                             flag = 1
                             break
