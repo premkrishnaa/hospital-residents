@@ -111,9 +111,9 @@ def main():
     if len(sys.argv) < 4:
         print("usage: {} <n1> <n2> <k_low> <k_up>".format(sys.argv[0]), file=sys.stderr)
     else:
-        n1, n2, k_low, k_up = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+        n1, n2, k_low, k_up, outputfolder = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
         G = seat_model_generator(n1, n2, k_low, k_up)
-        G.print_format()
+        G.print_format(outputfolder)
 
 if __name__ == '__main__':
     main()

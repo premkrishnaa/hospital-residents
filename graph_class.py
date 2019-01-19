@@ -2,6 +2,7 @@ from members import *
 from random import randint
 from random import sample
 import numpy as np
+import os
 
 possibile_credits = [40, 50, 60, 70]
 probs = np.random.geometric(p=0.10, size=len(possibile_credits))
@@ -63,23 +64,26 @@ class Graph:
         for res in self.residents:
             self.init_resident_class(res)
 
-    def print_format(self):
-
-        ofile = open("output/studentList.csv", "w")
+    def print_format(self, outputfolder="output"):
+    
+        if not os.path.exists(outputfolder):
+        	os.makedirs(outputfolder)
+        	
+        ofile = open(outputfolder+"/studentList.csv", "w")
         ofile.write("Rollno,MaxCredits\n")
         res = self.residents
         for r in res:
             ofile.write(r.name+","+str(r.uq)+"\n")
         ofile.close()
 
-        ofile = open("output/courseList.csv", "w")
+        ofile = open(outputfolder+"/courseList.csv", "w")
         ofile.write("CourseNo,MaxStrength,Credit\n")
         hosp = self.hospitals
         for h in hosp:
             ofile.write(h.name+","+str(h.uq)+","+str(h.credits)+"\n")
         ofile.close()
 
-        ofile = open("output/studentPreferenceList.csv", "w")
+        ofile = open(outputfolder+"/studentPreferenceList.csv", "w")
         ofile.write("Rollno,Preferences\n")
         res = self.residents
         for r in res:
@@ -89,7 +93,7 @@ class Graph:
             ofile.write('\n')
         ofile.close()
 
-        ofile = open("output/coursePreferenceList.csv", "w")
+        ofile = open(outputfolder+"/coursePreferenceList.csv", "w")
         ofile.write("CourseNo,Preferences\n")
         hosp = self.hospitals
         for h in hosp:
@@ -99,7 +103,7 @@ class Graph:
             ofile.write('\n')
         ofile.close()
 
-        ofile = open("output/studentClassSpecification.csv", "w")
+        ofile = open(outputfolder+"/studentClassSpecification.csv", "w")
         ofile.write("RollNo,MaxCoursesFromThisClass,Courses\n")
         res = self.residents
         for r in res:
@@ -110,7 +114,7 @@ class Graph:
                     ofile.write(s + '\n')
         ofile.close()
 
-        ofile = open("output/masterClassSpecification.csv", "w")
+        ofile = open(outputfolder+"/masterClassSpecification.csv", "w")
         ofile.write("MaxCoursesFromThisClass,Courses\n")
         if(len(self.master) > 0):
             for c in self.master:
