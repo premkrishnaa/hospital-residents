@@ -88,6 +88,8 @@ class Graph:
 
     def print_format(self, outputfolder="output"):
     
+        outputfolder = "/home/vedant/matchup/experiments/"+outputfolder
+        
         if not os.path.exists(outputfolder):
         	os.makedirs(outputfolder)
         	
@@ -143,7 +145,31 @@ class Graph:
                 s = c.get_class_str()
                 ofile.write(s + '\n')
         ofile.close()
+        
+        ofile = open(outputfolder+"/cli-iterativeHR", "w")
+        ofile.write(outputfolder+"/studentList.csv\n")
+        ofile.write(outputfolder+"/courseList.csv\n")
+        ofile.write(outputfolder+"/studentPreferenceList.csv\n")
+        ofile.write(outputfolder+"/coursePreferenceList.csv\n")
+        ofile.write(outputfolder+"/masterClassSpecification.csv\n")
+        ofile.write(outputfolder+"/studentClassSpecification.csv\n")
+        ofile.write("1\n")
+        ofile.write(outputfolder+"/iterativeHR")
+        ofile.close()
+        
+        ofile = open(outputfolder+"/cli-firstPreference", "w")
+        ofile.write(outputfolder+"/studentList.csv\n")
+        ofile.write(outputfolder+"/courseList.csv\n")
+        ofile.write(outputfolder+"/studentPreferenceList.csv\n")
+        ofile.write(outputfolder+"/coursePreferenceList.csv\n")
+        ofile.write(outputfolder+"/masterClassSpecification.csv\n")
+        ofile.write(outputfolder+"/studentClassSpecification.csv\n")
+        ofile.write("2\n")
+        ofile.write(outputfolder+"/firstPreference")
+        ofile.close()
 
+
+	
     def print_format_terminal(self):
         print('@PartitionA')
         res = self.residents
