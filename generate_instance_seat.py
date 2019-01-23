@@ -19,12 +19,13 @@ def seat_model_generator(n1, n2, k_low, k_up):
     def order_by_master_list(l, master_list):
         return sorted(l, key=master_list.index)
 
-    possibile_credits = [5, 10, 15, 20]
-    probs = np.random.geometric(p=0.10, size=len(possibile_credits))
+    possible_credits = [5, 10, 15, 20]
+    # possible_credits = [10]
+    probs = np.random.geometric(p=0.10, size=len(possible_credits))
     probs = probs / np.sum(probs)
 
     def get_hosp_credits():
-        return list(np.random.choice(possibile_credits, size=1, replace=False, p=probs))[0]
+        return list(np.random.choice(possible_credits, size=1, replace=False, p=probs))[0]
 
     def get_hosp_capacity_uniform():
         res_cap_sum = 0
@@ -34,7 +35,7 @@ def seat_model_generator(n1, n2, k_low, k_up):
         for h in g.hospitals:
             hosp_cred_sum += h.credits
 
-        return int(np.ceil((2.5 * res_cap_sum) / hosp_cred_sum))
+        return int(np.ceil((1.5 * res_cap_sum) / hosp_cred_sum))
 
     def get_hosp_capacity_non_uniform(cap):
         low = int(np.ceil(0.3*cap))
@@ -80,15 +81,15 @@ def seat_model_generator(n1, n2, k_low, k_up):
             pref_H[h].append(r)
 
     for r in R:
-        # pref_R[r] = order_by_master_list(pref_R[r], master_list_h)
-        random.shuffle(pref_R[r])
+        pref_R[r] = order_by_master_list(pref_R[r], master_list_h)
+        # random.shuffle(pref_R[r])
         res = g.get_resident(r)
         for hosp in pref_R[r]:
             res.pref.append(g.get_hospital(hosp))
 
     for h in H:
-        # pref_H[h] = order_by_master_list(pref_H[h], master_list)
-        random.shuffle(pref_H[h])
+        pref_H[h] = order_by_master_list(pref_H[h], master_list)
+        # random.shuffle(pref_H[h])
         hosp = g.get_hospital(h)
         for res in pref_H[h]:
             hosp.pref.append(g.get_resident(res))

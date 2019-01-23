@@ -5,11 +5,12 @@ from random import shuffle
 import numpy as np
 import os
 
-possibile_credits = [40, 50, 60, 70]
-probs = np.random.geometric(p=0.10, size=len(possibile_credits))
+possible_credits = [40, 50, 60, 70]
+# possible_credits = [50]
+probs = np.random.geometric(p=0.10, size=len(possible_credits))
 probs = probs / np.sum(probs)
 def get_res_credits():
-    return list(np.random.choice(possibile_credits, size=1, replace=False, p=probs))[0]
+    return list(np.random.choice(possible_credits, size=1, replace=False, p=probs))[0]
 
 class Graph:
     def __init__(self):
@@ -279,6 +280,7 @@ class Graph:
                 for h_name in line_split[1:]:
                     hosp = self.get_hospital(h_name)
                     r.pref.append(hosp)
+                    self.edges.append(Edge(r_name[1:], h_name[1:]))
             line_ct += 1
         f.close()
 
@@ -327,20 +329,20 @@ class Graph:
             line_ct += 1
         f.close()
 
-        f = open(dir_path + '/iterativeHR/perStudentAllottedCourses.csv')
-        line_ct = 0
-        for line in f.readlines():
-            line = line.strip()
-            if(line_ct != 0):
-                line_split = line.split(',')
-                r_name = line_split[0]
-                r = self.get_resident(r_name)
-                for h_name in line_split[1:]:
-                    hosp = self.get_hospital(h_name)
-                    r.matched.append(hosp)
-                    hosp.matched.append(r)
-            line_ct += 1
-        f.close()
+        # f = open(dir_path + '/iterativeHR/perStudentAllottedCourses.csv')
+        # line_ct = 0
+        # for line in f.readlines():
+        #     line = line.strip()
+        #     if(line_ct != 0):
+        #         line_split = line.split(',')
+        #         r_name = line_split[0]
+        #         r = self.get_resident(r_name)
+        #         for h_name in line_split[1:]:
+        #             hosp = self.get_hospital(h_name)
+        #             r.matched.append(hosp)
+        #             hosp.matched.append(r)
+        #     line_ct += 1
+        # f.close()
 
     def check_feasible(self, r, h, wh):
         wh_creds = 0
@@ -398,7 +400,7 @@ class Graph:
                             break
 
         print('\n\n****************\n\n')
-        f = open(dir_path + '/iterativeHR/unstablePairs_re.csv')
+        f = open(dir_path + '/iterativeHR/unstablePairs.csv')
         line_ct = 0
         for line in f.readlines():
             line = line.strip()
