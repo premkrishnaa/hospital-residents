@@ -14,7 +14,7 @@ def generate_max_card_lp(g, path):
         f.write(r.name + ' (uq): ')
         for i, h in enumerate(r.pref):
             h_ind = h.name[1:]
-            f.write('x_' + r_ind + '_' + h_ind + ' ')
+            f.write(str(h.credits) + ' x_' + r_ind + '_' + h_ind + ' ')
             if(i != len(r.pref)-1):
                 f.write('+ ')
         f.write('<= ' + str(r.uq) + '\n')
