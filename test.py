@@ -1,11 +1,12 @@
 from graph_class import Graph
 from generate_lp import generate_max_card_lp
 import cplex
+import sys
 
-def verification():
+def verification(directory):
     g = Graph()
-    g.create_graph('16Jan-PK-generator')
-    generate_max_card_lp(g, 'output/temp.txt')
+    g.create_graph(directory)
+    generate_max_card_lp(g, 'temp.txt')
     print(len(g.edges))
     # g.print_format_terminal()
     # print(len(g.residents), len(g.hospitals))
@@ -29,8 +30,9 @@ def run_lp(in_dir, out_dir):
             f.write(r_name + ',' + h_name + ' \n')
 
 def main():
-    verification()
-    run_lp('output/temp.txt', 'output/output.csv')
+    directory = sys.argv[1]
+    verification(directory)
+    run_lp('temp.txt', directory+'/output.csv')
 
 if __name__ == '__main__':
     main()
