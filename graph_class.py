@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 possible_credits = [40, 50, 60, 70]
-# possible_credits = [50]
+# set up geometric distribution among above possible resident credit limits
 probs = np.random.geometric(p=0.10, size=len(possible_credits))
 probs = probs / np.sum(probs)
 def get_res_credits():
@@ -69,6 +69,8 @@ class Graph:
         for h in self.hospitals:
             rpref.append(h.name)
         n = len(rpref)
+        if(n < 40):
+            return
         shuffle(rpref)
         tot_classes = 20
         class_size = int(np.ceil(float(n)/tot_classes))
@@ -88,12 +90,10 @@ class Graph:
             self.init_resident_class(res)
 
     def print_format(self, outputfolder="output"):
-    
-        outputfolder = "/home/vedant/matchup/experiments/"+outputfolder
-        
+        # create generated files in specific format in the output folder
         if not os.path.exists(outputfolder):
         	os.makedirs(outputfolder)
-        	
+
         ofile = open(outputfolder+"/studentList.csv", "w")
         ofile.write("Rollno,MaxCredits\n")
         res = self.residents
@@ -146,7 +146,7 @@ class Graph:
                 s = c.get_class_str()
                 ofile.write(s + '\n')
         ofile.close()
-        
+
         ofile = open(outputfolder+"/cli-iterativeHR", "w")
         ofile.write(outputfolder+"/studentList.csv\n")
         ofile.write(outputfolder+"/courseList.csv\n")
@@ -157,7 +157,7 @@ class Graph:
         ofile.write("1\n")
         ofile.write(outputfolder+"/iterativeHR")
         ofile.close()
-        
+
         ofile = open(outputfolder+"/cli-firstPreference", "w")
         ofile.write(outputfolder+"/studentList.csv\n")
         ofile.write(outputfolder+"/courseList.csv\n")
@@ -168,8 +168,6 @@ class Graph:
         ofile.write("2\n")
         ofile.write(outputfolder+"/firstPreference")
         ofile.close()
-
-
 	
     def print_format_terminal(self):
         print('@PartitionA')
@@ -250,6 +248,7 @@ class Graph:
         return None
 
     def create_graph(self, dir_path):
+        # parse input files in dir_path to create a Graph object
         f = open(dir_path + '/studentList.csv')
         line_ct = 0
         for line in f.readlines():
@@ -329,22 +328,8 @@ class Graph:
             line_ct += 1
         f.close()
 
-        # f = open(dir_path + '/iterativeHR/perStudentAllottedCourses.csv')
-        # line_ct = 0
-        # for line in f.readlines():
-        #     line = line.strip()
-        #     if(line_ct != 0):
-        #         line_split = line.split(',')
-        #         r_name = line_split[0]
-        #         r = self.get_resident(r_name)
-        #         for h_name in line_split[1:]:
-        #             hosp = self.get_hospital(h_name)
-        #             r.matched.append(hosp)
-        #             hosp.matched.append(r)
-        #     line_ct += 1
-        # f.close()
-
     def check_feasible(self, r, h, wh):
+        # utility function to check if a matching is feasible in the instance
         wh_creds = 0
         if(wh != None):
             wh_creds = wh.credits
@@ -360,11 +345,11 @@ class Graph:
                     return False
         return True
 
-    def verify_blocking_pairs(self, dir_path):
+    def verify_blocking_pairs(self):
+        # utility function to print the number of blocking pairs in a given matching
         for h in self.hospitals:
             h.compute_worst_rank_res()
 
-        bps_listed = set()
         bps_calc = set()
         counts = [0,0,0,0]
         for r in self.residents:
@@ -399,24 +384,7 @@ class Graph:
                         if(flag == 1):
                             break
 
-        print('\n\n****************\n\n')
-        f = open(dir_path + '/iterativeHR/unstablePairs.csv')
-        line_ct = 0
-        for line in f.readlines():
-            line = line.strip()
-            if(line_ct != 0):
-                bps_listed.add(line)
-            line_ct += 1
-        f.close()
-
-        print(len(bps_calc), len(bps_listed), len(bps_listed & bps_calc))
-        print(counts)
-        print('\n\n****************\n\n')
-        final = (bps_listed & (bps_calc ^ bps_listed))
-        print(str(len(final)) + '\n\n')
-        for x in final:
-            print(x)
-        print('\n\n****************\n\n')
+        print(len(bps_calc))
 
     def verify_feasible_matching(self):
         for r in self.residents:
@@ -430,6 +398,7 @@ class Graph:
         return True
 
     def verify_exchange_blocking_pairs(self):
+        # utility function to print the list of exchange blocking pairs for a given matching
         n = len(self.residents)
         for i in range(n):
             for j in range(i+1, n):

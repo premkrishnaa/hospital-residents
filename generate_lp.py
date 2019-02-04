@@ -1,7 +1,10 @@
 from graph_class import *
 
 def generate_max_card_lp(g, path):
+    # write the max cardinality matching LP constraints to output file in path
     f = open(path, "w")
+
+    # Objective function
     f.write("maximize\nsize: ")
     for i, edge in enumerate(g.edges):
         f.write(edge.name + ' ')
@@ -9,6 +12,7 @@ def generate_max_card_lp(g, path):
             f.write('+ ')
 
     f.write('\n\nst\n')
+    # resident wise credit capacity constraints
     for r in g.residents:
         r_ind = r.name[1:]
         f.write(r.name + ' (uq): ')
@@ -19,6 +23,7 @@ def generate_max_card_lp(g, path):
                 f.write('+ ')
         f.write('<= ' + str(r.uq) + '\n')
 
+    # hospital wise capacity constraints
     for h in g.hospitals:
         h_ind = h.name[1:]
         if(len(h.pref) > 0):
@@ -30,6 +35,7 @@ def generate_max_card_lp(g, path):
                     f.write('+ ')
             f.write('<= ' + str(h.uq) + '\n')
 
+    # resident wise class constraints
     for r in g.residents:
         r_ind = r.name[1:]
         if(len(r.classes) > 0):
@@ -42,6 +48,7 @@ def generate_max_card_lp(g, path):
                         f.write('+ ')
                 f.write('<= ' + str(c.cap) + '\n')
 
+    # master class constraints for each resident
     for r in g.residents:
         r_ind = r.name[1:]
         for i, c in enumerate(g.master):
@@ -60,6 +67,7 @@ def generate_max_card_lp(g, path):
                 s += ('<= ' + str(c.cap) + '\n')
                 f.write(s)
 
+    # specifying that all decision variables are binary (0/1)
     f.write('\nbin\n')
     for i, edge in enumerate(g.edges):
         f.write(edge.name + ' ')

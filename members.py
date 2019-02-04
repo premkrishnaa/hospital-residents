@@ -1,4 +1,5 @@
 class Resident:
+    # constructor
     def __init__(self, name, uq=0):
         self.name = name
         self.pref = []
@@ -21,6 +22,7 @@ class Resident:
                 return i+1
         return 9999999999
 
+    # returns true if resident prefers h1 over h2
     def is_better_preferred(self, h1, h2):
         return self.get_rank(h1) < self.get_rank(h2)
 
@@ -40,12 +42,14 @@ class Resident:
                 worstRankHospital = h
         self.worstRankHosp = worstRankHospital
 
+    # returns true if resident is matched to hosp
     def is_matched_to(self, hosp):
         for h in self.matched:
             if(h.name == hosp.name):
                 return True
         return False
 
+    # utility function to check if resident satisfies all class constraints
     def is_feasible_matching(self, master):
         tot_cred = self.get_total_allotted_credits()
         if(tot_cred > self.uq):
@@ -59,6 +63,7 @@ class Resident:
         return True
 
 class Hospital:
+    # constructor
     def __init__(self, name, lq, uq, credits=10):
         self.name = name
         self.pref = []
@@ -112,10 +117,11 @@ class Classification:
             s += ',' + hosp
         return s
 
-    def intersection_with_matching(self, m):
+    # returns the size of intersection with some matched set of hospitals
+    def intersection_with_matching(self, M):
         m_names = set()
-        for m_ in m:
-            m_names.add(m_.name)
+        for m in M:
+            m_names.add(m.name)
         m_names = m_names & set(self.class_list)
         return len(m_names)
 

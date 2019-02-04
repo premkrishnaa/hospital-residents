@@ -4,23 +4,22 @@ import collections
 import random
 import numpy as np
 
+# set random seed for reproducibility
 random.seed(1000)
 
 def seat_model_generator(n1, n2, k_low, k_up):
     """
     create a graph with the partition R of size n1 and
-    partition H of size n2 using the model as described in
-    Marriage, Honesty, and Stability
-    Immorlica, Nicole and Mahdian, Mohammad
-    Sixteenth Annual ACM-SIAM Symposium on Discrete Algorithms
+    partition H of size n2
     :param n1: size of partition R
     :param n2: size of partition H
+    :param k_low, k_up: range for length of resident preference lists
     """
     def order_by_master_list(l, master_list):
         return sorted(l, key=master_list.index)
 
     possible_credits = [5, 10, 15, 20]
-    # possible_credits = [10]
+    # set up geometric distribution among above possible hospital credits
     probs = np.random.geometric(p=0.10, size=len(possible_credits))
     probs = probs / np.sum(probs)
 
@@ -28,6 +27,7 @@ def seat_model_generator(n1, n2, k_low, k_up):
         return list(np.random.choice(possible_credits, size=1, replace=False, p=probs))[0]
 
     def get_hosp_capacity_uniform():
+        # returns the average hospital capacity based on resident, hospital credits
         res_cap_sum = 0
         hosp_cred_sum = 0
         for r in g.residents:
@@ -69,14 +69,13 @@ def seat_model_generator(n1, n2, k_low, k_up):
 
     prob_dict = dict(zip(H, p))
     master_list_h = sorted(H, key=lambda h: prob_dict[h], reverse=True)
-    # print(prob_dict, master_list_h, sep='\n')
 
     pref_H, pref_R = collections.defaultdict(list), {}
     for r in R:
-        # sample women according to the probability distribution and without replacement
+        # sample hospitals according to the probability distribution and without replacement
         k = random.randint(k_low, k_up)
         pref_R[r] = list(np.random.choice(H, size=min(len(H), k), replace=False, p=p))
-        # add these man to the preference list for the corresponding women
+        # add these residents to the preference list for the corresponding hospitals
         for h in pref_R[r]:
             pref_H[h].append(r)
 
@@ -96,23 +95,23 @@ def seat_model_generator(n1, n2, k_low, k_up):
 
     g.init_resident_capacities()
 
-    # uniform capacity for courses
+    # get average capacity for hospitals
     cap = get_hosp_capacity_uniform()
     for h in g.hospitals:
         h.uq = get_hosp_capacity_non_uniform(cap)
 
+    # initialize class constraints for residents
     g.init_all_resident_class()
-    if(n2 > 20):
-        g.init_master_classes_disjoint()
-    else:
-        g.init_master_classes_random()
-    return g
 
+    # initialize master class constraints applicable to all residents 
+    g.init_master_classes_disjoint()
+
+    return g
 
 def main():
     import sys
-    if len(sys.argv) < 5:
-        print("usage: {} <n1> <n2> <k_low> <k_up>".format(sys.argv[0]), file=sys.stderr)
+    if(len(sys.argv) < 6):
+        print("usage: {} <n1> <n2> <k_low> <k_up> <outputfolder>".format(sys.argv[0]), file=sys.stderr)
     else:
         n1, n2, k_low, k_up, outputfolder = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
         G = seat_model_generator(n1, n2, k_low, k_up)
